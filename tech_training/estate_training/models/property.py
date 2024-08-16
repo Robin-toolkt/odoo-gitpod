@@ -1,8 +1,8 @@
 from odoo import models, fields, api
 
-class estate_property(models.Model):
+class EstateProperty(models.Model):
     _name = 'estate.property'
-    _description = 'estate.property'
+    _description = 'Estate Property'
 
     name = fields.Char("Title", required=True)
     description = fields.Text("Description")
@@ -17,12 +17,15 @@ class estate_property(models.Model):
     garden = fields.Boolean("Garden")
     garden_area = fields.Integer("Garden Area (sqm)")
     garden_orientation = fields.Selection( 
-[('North','North'),('South','South'),('East','East'),('West','West')], 
-        string="Garden Orientation")
+        [('North','North'),('South','South'),('East','East'),('West','West')], 
+        string="Garden Orientation"
+    )
     status = fields.Selection( 
-[('New','New'),('Offer Received','Offer Received'),('Offer Granted','Offer Granted')], 
-        string="Status", default="New")
-    active = fields.Boolean("Active")
+        [('New','New'),('Offer Received','Offer Received'),('Offer Granted','Offer Granted')], 
+        string="Status", default="New"
+    )
+    active = fields.Boolean("Active", default=True)
     partner_id = fields.Many2one("res.partner", string="Partner")
     partner_type = fields.Many2one("estate.property_type", string="Property Type")
     property_tags = fields.Many2many("estate.property_tags", string="Property Tags")
+    offer_ids = fields.One2many("estate.property.offer", "property_id", string="Offers")

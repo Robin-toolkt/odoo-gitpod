@@ -27,6 +27,7 @@ Long description of module's purpose
         'views/property.xml',
         'views/property_type.xml',
         'views/property_tags.xml',
+        'views/property_offer.xml',
     ],
     # only loaded in demonstration mode
     'demo': [
