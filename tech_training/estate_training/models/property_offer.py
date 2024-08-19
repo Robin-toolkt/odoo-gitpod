@@ -1,5 +1,7 @@
 from odoo import models, fields, api
+from odoo.exceptions import UserError, ValidationError
 from dateutil.relativedelta import relativedelta
+
 
 class EstatePropertyOffer(models.Model):
     _name = 'estate.property.offer'
@@ -18,13 +20,16 @@ class EstatePropertyOffer(models.Model):
         default=False,
     )
 
-    partner_id = fields.Many2one("res.partner", string="Partner", required=True)
-    property_id = fields.Many2one("estate.property", string="Property", required=True)
+    partner_id = fields.Many2one(
+        "res.partner", string="Partner", required=True)
+    property_id = fields.Many2one(
+        "estate.property", string="Property", required=True)
     property_type_id = fields.Many2one(
         "estate.property_type", string="Property Type", store=True
     )
 
-    date_deadline = fields.Date(string="Deadline", compute="_compute_date_deadline", inverse="_inverse_date_deadline")
+    date_deadline = fields.Date(
+        string="Deadline", compute="_compute_date_deadline", inverse="_inverse_date_deadline")
 
     @api.depends("create_date", "validity")
     def _compute_date_deadline(self):
@@ -36,4 +41,29 @@ class EstatePropertyOffer(models.Model):
         for offer in self:
             date = offer.create_date.date() if offer.create_date else fields.Date.today()
             offer.validity = (offer.date_deadline - date).days
- 
+
+    def button_accept(self):
+        if "accepted" in self.mapped("property_id.offer_ids.state"):
+            raise UserError("An offer is already been accepted")
+        self.write(
+            {
+                "state": "accepted",
+            }
+        )
+        other_offers = self.property_id.offer_ids.filtered(
+            lambda offer: offer != self)
+        other_offers.write({"state": "refused"})
+        return self.mapped("property_id").write(
+            {
+                "status": "Offer Accepted",
+                "selling_price": self.price,
+                "buyer": self.partner_id.id,
+            }
+        )
+
+    def button_refuse(self):
+        return self.write(
+            {
+                "state": "refused",
+            }
+        )
