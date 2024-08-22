@@ -28,10 +28,10 @@ Long description of module's purpose
         'views/property_type.xml',
         'views/property_tags.xml',
         'views/property_offer.xml',
+        'views/users.xml'
     ],
     # only loaded in demonstration mode
     'demo': [
         'demo/demo.xml',
     ],
 }
-

@@ -1,10 +1,18 @@
 from odoo import models, fields, api
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import float_compare, float_is_zero
 
 
 class EstateProperty(models.Model):
     _name = 'estate.property'
     _description = 'Estate Property'
+    _order = 'id desc'
+    _sql_constraints = [
+        ("check_expected_price", "Check(expected_price > 0)",
+         "The expected price must be strictly positive"),
+        ("check_selling_price", "Check(selling_price > 0)",
+         "The selling price must be positive"),
+    ]
 
     name = fields.Char("Title", required=True)
     description = fields.Text("Description")
@@ -34,7 +42,7 @@ class EstateProperty(models.Model):
 
     partner_id = fields.Many2one("res.partner", string="Partner")
     partner_type = fields.Many2one(
-        "estate.property_type", string="Property Type")
+        "estate.property.type", string="Property Type")
     property_tags = fields.Many2many(
         "estate.property_tags", string="Property Tags")
     offer_ids = fields.One2many(
@@ -75,3 +83,15 @@ class EstateProperty(models.Model):
         for prop in self:
             prop.best_price = max(prop.offer_ids.mapped(
                 "price")) if prop.offer_ids else 0.0
+
+    @api.constrains("expected_price", "selling_price")
+    def _check_price_difference(self):
+        for prop in self:
+            if (
+                not float_is_zero(prop.selling_price, precision_rounding=0.01)
+                and float_compare(prop.selling_price, prop.expected_price * 90.0 / 100.0, precision_rounding=0.01) < 0
+            ):
+                raise ValidationError(
+                    "The selling price must be at least 90% of the expected price! "
+                    + "You must reduce the expected price if you want to accept this offer."
+                )

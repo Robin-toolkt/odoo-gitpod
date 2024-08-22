@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 class EstatePropertyOffer(models.Model):
     _name = 'estate.property.offer'
     _description = 'estate.property.offer'
+    _order = 'price desc'
 
     price = fields.Float("Price", required=True)
     validity = fields.Integer("Validity (days)", default=7)
@@ -25,7 +26,7 @@ class EstatePropertyOffer(models.Model):
     property_id = fields.Many2one(
         "estate.property", string="Property", required=True)
     property_type_id = fields.Many2one(
-        "estate.property_type", string="Property Type", store=True
+        "estate.property.type", related="property_id.partner_type", string="Property Type", store=True
     )
 
     date_deadline = fields.Date(
@@ -67,3 +68,10 @@ class EstatePropertyOffer(models.Model):
                 "state": "refused",
             }
         )
+
+    @api.model
+    def create(self, vals):
+        if vals.get("property_id") and vals.get("price"):
+            prop = self.env["estate.property"].browse(vals["property_id"])
+            prop.status = "Offer Received"
+        return super().create(vals)
